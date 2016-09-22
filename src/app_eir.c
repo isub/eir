@@ -2,19 +2,19 @@
 
 static int app_eir_entry (const char *p_pszConfFile)
 {
-  /* регистрация функции валидации пира */
+  /* СЂРµРіРёСЃС‚СЂР°С†РёСЏ С„СѓРЅРєС†РёРё РІР°Р»РёРґР°С†РёРё РїРёСЂР° */
   CHECK_FCT (fd_peer_validate_register (app_pcrf_peer_validate));
 
-  /* загрузка черного списка */
+  /* Р·Р°РіСЂСѓР·РєР° С‡РµСЂРЅРѕРіРѕ СЃРїРёСЃРєР° */
   CHECK_FCT (app_eir_loadblacklist (p_pszConfFile));
 
-  /* инициализация словаря */
+  /* РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃР»РѕРІР°СЂСЏ */
   CHECK_FCT (eir_dict_init (NULL));
 
-  /* регистрация callback функции обработки ECR запросов */
+  /* СЂРµРіРёСЃС‚СЂР°С†РёСЏ callback С„СѓРЅРєС†РёРё РѕР±СЂР°Р±РѕС‚РєРё ECR Р·Р°РїСЂРѕСЃРѕРІ */
   CHECK_FCT (app_eir_server_init ());
 
-  /* регистрация приложения */
+  /* СЂРµРіРёСЃС‚СЂР°С†РёСЏ РїСЂРёР»РѕР¶РµРЅРёСЏ */
   CHECK_FCT (fd_disp_app_support (g_psoDictAppEIR, g_psoDict3GPPVend, 1, 0));
 
   return 0;

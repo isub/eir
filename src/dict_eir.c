@@ -47,7 +47,7 @@ Message Format
 */
 struct dict_object *g_psoDictCmdECA;
 
-/* идентификаторы объетов словаря, необходимые для работы */
+/* РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ РѕР±СЉРµС‚РѕРІ СЃР»РѕРІР°СЂСЏ, РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ СЂР°Р±РѕС‚С‹ */
 struct dict_object *g_psoAuthSessionState;
 struct dict_object *g_psoOriginHost;
 struct dict_object *g_psoOriginRealm;
@@ -72,7 +72,7 @@ struct dict_object *g_psoDictEquipmentStatus;
 
 /*==================================================================*/
 #define PARSE_loc_rules(_rulearray, _parent, _avp_search_flag) {	\
-    int __ar;								\
+    size_t __ar;								\
     for (__ar=0; __ar < sizeof(_rulearray) / sizeof((_rulearray)[0]); __ar++) {	\
       struct dict_rule_data __data = { NULL,				\
 				       (_rulearray)[__ar].position,	\
@@ -109,7 +109,7 @@ struct local_rules_definition
   int                 max;
 };
 
-int eir_dict_init (const char *p_pszConfFile)
+int eir_dict_init ()
 {
   {
     struct dict_vendor_data vendor_data = { 10415, "3GPP" };
@@ -291,7 +291,7 @@ int eir_dict_init (const char *p_pszConfFile)
     PARSE_loc_rules (rules, g_psoDictCmdECA, AVP_BY_NAME_ALL_VENDORS);
   }
 
-  /* кешируем необходимые идентификаторы */
+  /* РєРµС€РёСЂСѓРµРј РЅРµРѕР±С…РѕРґРёРјС‹Рµ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ */
   /* Auth-Session-State */
   CHECK_dict_search (DICT_AVP, AVP_BY_NAME, "Auth-Session-State", &g_psoAuthSessionState);
   CHECK_dict_search (DICT_AVP, AVP_BY_NAME, "Origin-Host", &g_psoOriginHost);

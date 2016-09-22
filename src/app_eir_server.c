@@ -1,6 +1,6 @@
 #include "app_eir.h"
 
-/* äàííûå çàïðîñà */
+/* Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð·Ð°Ð¿Ñ€Ð¾ÑÐ° */
 /* Terminal-Information */
 struct STerminalInformation {
   struct octet_string m_soIMEI;
@@ -14,23 +14,24 @@ struct SECRData {
   struct octet_string m_soOriginRealm;
   struct STerminalInformation m_soTerminalInformation;
 };
-/* î÷èñòêà */
+/* Ð¾Ñ‡Ð¸ÑÑ‚ÐºÐ° */
 void app_eir_clean_req_data (struct SECRData *p_psoECRData);
 void app_eir_clean_os (struct octet_string *p_psoOS);
 void app_eir_os_copy (struct octet_string *p_psoDst, unsigned char *p_pData, int p_iLen);
 
-/* âûáîðêà äàííûõ èç çàïðîñà */
+/* Ð²Ñ‹Ð±Ð¾Ñ€ÐºÐ° Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¸Ð· Ð·Ð°Ð¿Ñ€Ð¾ÑÐ° */
 int pcrf_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRData);
 int pcrf_extract_terminal_information (struct avp *p_psoAVP, struct STerminalInformation *p_psoTerminalInformation);
 
-/* õýíäëåð äëÿ îáðàáîò÷èêà ECR çàïðîñîâ */
+/* Ñ…ÑÐ½Ð´Ð»ÐµÑ€ Ð´Ð»Ñ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚Ñ‡Ð¸ÐºÐ° ECR Ð·Ð°Ð¿Ñ€Ð¾ÑÐ¾Ð² */
 static struct disp_hdl *g_pCBHandler = NULL;
 
-/* callback-ôóíêöèÿ äëÿ îáðàáîòêè */
+/* callback-Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð´Ð»Ñ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ¸ */
 int app_eir_ecr_cb (struct msg **, struct avp *, struct session *, void *, enum disp_action *);
 
 int app_eir_server_init ()
 {
+  int iRetVal = 0;
   struct disp_when data;
 
   TRACE_DEBUG (FULL, "Initializing dispatch callbacks for ECR");
@@ -41,6 +42,8 @@ int app_eir_server_init ()
 
   /* Now specific handler for ECR */
   CHECK_FCT (fd_disp_register (app_eir_ecr_cb, DISP_HOW_CC, &data, NULL, &g_pCBHandler));
+
+  return iRetVal;
 }
 
 void app_eir_server_fini (void)
@@ -55,11 +58,17 @@ int app_eir_ecr_cb (struct msg **p_ppMsg, struct avp *p_pAVP, struct session *p_
   struct msg *pAns = NULL;
   struct SECRData soECRData;
 
-  /* âûáîðêà äàííûõ èç çàïðîñà */
+  /* Ð¿Ð¾Ð´Ð°Ð²ÑÐµÐ¼ Ð¿Ñ€ÐµÐ´ÑƒÐ¿Ñ€ÐµÐ¶Ð´ÐµÐ½Ð¸Ðµ ÐºÐ¾Ð¼Ð¿Ð¸Ð»ÑÑ‚Ð¾Ñ€Ð° Ð¾ Ð½ÐµÐ¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÐ¼Ð¾Ð¼ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ðµ */
+  p_pAVP = p_pAVP;
+  p_pSess = p_pSess;
+  p_pOpaque = p_pOpaque;
+  p_pAct = p_pAct;
+
+  /* Ð²Ñ‹Ð±Ð¾Ñ€ÐºÐ° Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¸Ð· Ð·Ð°Ð¿Ñ€Ð¾ÑÐ° */
   memset (&soECRData, 0, sizeof (soECRData));
   pcrf_extract_req_data (*p_ppMsg, &soECRData);
 
-  /* ôîðìèðîâàíèå îòâåòà */
+  /* Ñ„Ð¾Ñ€Ð¼Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¾Ñ‚Ð²ÐµÑ‚Ð° */
   CHECK_FCT_DO (fd_msg_new_answer_from_req (fd_g_config->cnf_dict, p_ppMsg, 0), goto cleanup_and_exit);
   pAns = *p_ppMsg;
 
@@ -153,17 +162,16 @@ int pcrf_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRD
 
   struct avp *psoAVP;
   struct avp_hdr *psoAVPHdr;
-  char mcValue[0x10000];
   vendor_id_t tVenId;
 
-  /* èùåì ïåðâóþ AVP */
+  /* Ð¸Ñ‰ÐµÐ¼ Ð¿ÐµÑ€Ð²ÑƒÑŽ AVP */
   iRetVal = fd_msg_browse_internal (p_psoMsgOrAVP, MSG_BRW_FIRST_CHILD, (void **)&psoAVP, NULL);
   if (iRetVal) {
     return iRetVal;
   }
 
   do {
-    /* ïîëó÷àåì çàãîëîâîê AVP */
+    /* Ð¿Ð¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ð·Ð°Ð³Ð¾Ð»Ð¾Ð²Ð¾Ðº AVP */
     if (NULL == psoAVP)
       break;
     iRetVal = fd_msg_avp_hdr (psoAVP, &psoAVPHdr);
@@ -216,7 +224,7 @@ int pcrf_extract_terminal_information (struct avp *p_psoAVP, struct STerminalInf
   }
 
   do {
-    /* ïîëó÷àåì çàãîëîâîê AVP */
+    /* Ð¿Ð¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ð·Ð°Ð³Ð¾Ð»Ð¾Ð²Ð¾Ðº AVP */
     if (NULL == psoAVP)
       break;
     iRetVal = fd_msg_avp_hdr (psoAVP, &psoAVPHdr);
@@ -276,12 +284,15 @@ int app_pcrf_peer_validate (struct peer_info *p_psoPeerInfo, int *p_piAuth, int 
 {
   int iRetVal = 0;
 
-  /* ïðîâåðêó ïèðà íåîáõîäèìî ïðîâåñòè ïî ñëåäóþùèì ïàðàåìòðàì: */
+  /* Ð¿Ð¾Ð´Ð°Ð²ÑÐµÐ¼ Ð¿Ñ€ÐµÐ´ÑƒÐ¿Ñ€ÐµÐ¶Ð´ÐµÐ½Ð¸Ðµ ÐºÐ¾Ð¼Ð¿Ð¸Ð»ÑÑ‚Ð¾Ñ€Ð° Ð¾ Ð½ÐµÐ¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÐ¼Ð¾Ð¼ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ðµ */
+  cb2 = cb2;
+
+  /* Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÑƒ Ð¿Ð¸Ñ€Ð° Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ Ð¿Ñ€Ð¾Ð²ÐµÑÑ‚Ð¸ Ð¿Ð¾ ÑÐ»ÐµÐ´ÑƒÑŽÑ‰Ð¸Ð¼ Ð¿Ð°Ñ€Ð°ÐµÐ¼Ñ‚Ñ€Ð°Ð¼: */
   p_psoPeerInfo->pi_diamid;
   p_psoPeerInfo->pi_diamidlen;
   /**/
 
-  /* åñëè ïðîâåðêà ïðîéäåíà óñïåøíî */
+  /* ÐµÑÐ»Ð¸ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ° Ð¿Ñ€Ð¾Ð¹Ð´ÐµÐ½Ð° ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ */
   p_psoPeerInfo->config.pic_flags.sec = PI_SEC_NONE;
   *p_piAuth = 1;
 

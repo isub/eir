@@ -10,25 +10,25 @@ struct octet_string {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  /* загрузка блэклиста */
+  /* Р·Р°РіСЂСѓР·РєР° Р±Р»СЌРєР»РёСЃС‚Р° */
   int app_eir_loadblacklist (const char *p_pszConfFile);
-  /* проверка принадлжености IMEI черному списку */
+  /* РїСЂРѕРІРµСЂРєР° РїСЂРёРЅР°РґР»Р¶РµРЅРѕСЃС‚Рё IMEI С‡РµСЂРЅРѕРјСѓ СЃРїРёСЃРєСѓ */
   int app_eir_imei_in_blacklist (struct octet_string *p_pIMEI);
 #ifdef __cplusplus
 }
 #endif
 
-/* инициализация словаря */
-int eir_dict_init (const char *p_pszConfFile);
-/* инициализация обработчика ECR команд */
+/* РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃР»РѕРІР°СЂСЏ */
+int eir_dict_init ();
+/* РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РѕР±СЂР°Р±РѕС‚С‡РёРєР° ECR РєРѕРјР°РЅРґ */
 int app_eir_server_init ();
-/* выгрузка сервера */
+/* РІС‹РіСЂСѓР·РєР° СЃРµСЂРІРµСЂР° */
 void app_eir_server_fini (void);
 
-/* валидация клиента */
+/* РІР°Р»РёРґР°С†РёСЏ РєР»РёРµРЅС‚Р° */
 int app_pcrf_peer_validate (struct peer_info *p_psoPeerInfo, int *p_piAuth, int (**cb2)(struct peer_info *));
 
-/* кешированные объекты словаря */
+/* РєРµС€РёСЂРѕРІР°РЅРЅС‹Рµ РѕР±СЉРµРєС‚С‹ СЃР»РѕРІР°СЂСЏ */
 extern struct dict_object *g_psoDict3GPPVend;
 extern struct dict_object *g_psoDictAppEIR;
 extern struct dict_object *g_psoDictCmdECR;
