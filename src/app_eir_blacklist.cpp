@@ -27,6 +27,11 @@ int app_eir_loadblacklist (const char *p_pszConfFile)
   char *pszCR, *pszLF;
   octet_string soTmp;
 
+  if (NULL != p_pszConfFile) {
+  } else {
+    return 0;
+  }
+
   do {
     psoFile = fopen (p_pszConfFile, "r");
     if (NULL == psoFile) {

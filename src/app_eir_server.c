@@ -287,7 +287,7 @@ int app_pcrf_peer_validate (struct peer_info *p_psoPeerInfo, int *p_piAuth, int 
   /* подавяем предупреждение компилятора о неиспользуемом параметре */
   cb2 = cb2;
 
-  /* проверку пира необходимо провести по следующим параемтрам: */
+  /* проверку пира необходимо провести по следующим параметрам: */
   p_psoPeerInfo->pi_diamid;
   p_psoPeerInfo->pi_diamidlen;
   /**/
