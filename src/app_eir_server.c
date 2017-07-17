@@ -1,3 +1,5 @@
+#include <signal.h>
+
 #include "app_eir.h"
 
 /* данные запроса */
@@ -10,6 +12,7 @@ struct STerminalInformation {
 /* ECR data */
 struct SECRData {
   int m_iAuthSessionState;
+  struct octet_string m_soUserName;
   struct octet_string m_soOriginHost;
   struct octet_string m_soOriginRealm;
   struct STerminalInformation m_soTerminalInformation;
@@ -29,6 +32,26 @@ static struct disp_hdl *g_pCBHandler = NULL;
 /* callback-функция для обработки */
 int app_eir_ecr_cb (struct msg **, struct avp *, struct session *, void *, enum disp_action *);
 
+static void sig_oper( void )
+{
+  LOG_D( "enter into '%s'", __FUNCTION__ );
+
+  struct octet_string soIMEI, soSV, soIMSI;
+
+  soIMEI.data = ( unsigned char* ) "862641020808160";
+  soIMEI.len = strlen( (const char*)soIMEI.data );
+
+  soSV.data = ( unsigned char* )"02";
+  soSV.len = strlen( (const char*)soSV.data );
+
+  soIMSI.data = ( unsigned char* )"250270100161042";
+  soIMSI.len = strlen( (const char*)soIMSI.data );
+
+  app_eir_imei_in_blacklist( &soIMEI, &soSV, &soIMSI );
+
+  LOG_D( "leave '%s'", __FUNCTION__ );
+}
+
 int app_eir_server_init ()
 {
   int iRetVal = 0;
@@ -42,6 +65,8 @@ int app_eir_server_init ()
 
   /* Now specific handler for ECR */
   CHECK_FCT (fd_disp_register (app_eir_ecr_cb, DISP_HOW_CC, &data, NULL, &g_pCBHandler));
+
+  CHECK_FCT( fd_event_trig_regcb( SIGUSR1, "app_eir", sig_oper ) );
 
   return iRetVal;
 }
@@ -137,11 +162,10 @@ int app_eir_ecr_cb (struct msg **p_ppMsg, struct avp *p_pAVP, struct session *p_
     union avp_value soAVPVal;
     struct avp *psoChildAVP = NULL;
     CHECK_FCT_DO (fd_msg_avp_new (g_psoDictEquipmentStatus, 0, &psoChildAVP), goto cleanup_and_exit);
-    if (app_eir_imei_in_blacklist (&soECRData.m_soTerminalInformation.m_soIMEI)) {
-      soAVPVal.u32 = 1; /* BLACKLISTED */
-    } else {
-      soAVPVal.u32 = 0; /* WHITELISTED */
-    }
+    soAVPVal.u32 = app_eir_imei_in_blacklist(
+      &soECRData.m_soTerminalInformation.m_soIMEI,
+      &soECRData.m_soTerminalInformation.m_soSoftwareVersion,
+      &soECRData.m_soUserName );
     CHECK_FCT_DO (fd_msg_avp_setvalue (psoChildAVP, &soAVPVal), goto cleanup_and_exit);
     CHECK_FCT_DO (fd_msg_avp_add (pAns, MSG_BRW_LAST_CHILD, psoChildAVP), goto cleanup_and_exit);
   }
@@ -183,28 +207,31 @@ int pcrf_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRD
     } else {
       tVenId = (vendor_id_t)-1;
     }
-    switch (tVenId) {
-    case (vendor_id_t)-1: /* vendor undefined */
-    case 0: /* Diameter */
-      switch (psoAVPHdr->avp_code) {
-      case 264: /* Origin-Host */
-        app_eir_os_copy (&p_psoECRData->m_soOriginHost, psoAVPHdr->avp_value->os.data, psoAVPHdr->avp_value->os.len);
-        break;
-      case 277: /* Auth-Session-State */
-        p_psoECRData->m_iAuthSessionState = psoAVPHdr->avp_value->i32;
-        break;
-      case 296: /* Origin-Realm */
-        app_eir_os_copy (&p_psoECRData->m_soOriginRealm, psoAVPHdr->avp_value->os.data, psoAVPHdr->avp_value->os.len);
-        break;
-      }
-      break; /* Diameter */ /* vendor undefined */
-    case 10415: /* 3GPP */
-      switch (psoAVPHdr->avp_code) {
-      case 1401: /* Terminal-Information */
-        pcrf_extract_terminal_information (psoAVP, &p_psoECRData->m_soTerminalInformation);
-        break;
-      }
-      break; /* 3GPP */
+    switch ( tVenId ) {
+      case (vendor_id_t)-1: /* vendor undefined */
+      case 0: /* Diameter */
+        switch ( psoAVPHdr->avp_code ) {
+          case 1:   /* User-Name */
+            app_eir_os_copy( &p_psoECRData->m_soUserName, psoAVPHdr->avp_value->os.data, psoAVPHdr->avp_value->os.len );
+            break;
+          case 264: /* Origin-Host */
+            app_eir_os_copy( &p_psoECRData->m_soOriginHost, psoAVPHdr->avp_value->os.data, psoAVPHdr->avp_value->os.len );
+            break;
+          case 277: /* Auth-Session-State */
+            p_psoECRData->m_iAuthSessionState = psoAVPHdr->avp_value->i32;
+            break;
+          case 296: /* Origin-Realm */
+            app_eir_os_copy( &p_psoECRData->m_soOriginRealm, psoAVPHdr->avp_value->os.data, psoAVPHdr->avp_value->os.len );
+            break;
+        }
+        break; /* Diameter */ /* vendor undefined */
+      case 10415: /* 3GPP */
+        switch ( psoAVPHdr->avp_code ) {
+          case 1401: /* Terminal-Information */
+            pcrf_extract_terminal_information( psoAVP, &p_psoECRData->m_soTerminalInformation );
+            break;
+        }
+        break; /* 3GPP */
     }
   } while (0 == fd_msg_browse_internal ((void *)psoAVP, MSG_BRW_NEXT, (void **)&psoAVP, NULL));
 
@@ -253,13 +280,14 @@ int pcrf_extract_terminal_information (struct avp *p_psoAVP, struct STerminalInf
   return iRetVal;
 }
 
-void app_eir_clean_req_data (struct SECRData *p_psoECRData)
+void app_eir_clean_req_data( struct SECRData *p_psoECRData )
 {
-  app_eir_clean_os (&p_psoECRData->m_soOriginHost);
-  app_eir_clean_os (&p_psoECRData->m_soOriginRealm);
-  app_eir_clean_os (&p_psoECRData->m_soTerminalInformation.m_so3GPP2MEID);
-  app_eir_clean_os (&p_psoECRData->m_soTerminalInformation.m_soIMEI);
-  app_eir_clean_os (&p_psoECRData->m_soTerminalInformation.m_soSoftwareVersion);
+  app_eir_clean_os( &p_psoECRData->m_soUserName );
+  app_eir_clean_os( &p_psoECRData->m_soOriginHost );
+  app_eir_clean_os( &p_psoECRData->m_soOriginRealm );
+  app_eir_clean_os( &p_psoECRData->m_soTerminalInformation.m_so3GPP2MEID );
+  app_eir_clean_os( &p_psoECRData->m_soTerminalInformation.m_soIMEI );
+  app_eir_clean_os( &p_psoECRData->m_soTerminalInformation.m_soSoftwareVersion );
 }
 
 void app_eir_clean_os (struct octet_string *p_psoOS)
@@ -273,7 +301,7 @@ void app_eir_clean_os (struct octet_string *p_psoOS)
 
 void app_eir_os_copy (struct octet_string *p_psoDst, unsigned char *p_pData, int p_iLen)
 {
-  p_psoDst->data = malloc (p_iLen);
+  p_psoDst->data = (unsigned char*)malloc( p_iLen );
   if (p_psoDst->data) {
     memcpy (p_psoDst->data, p_pData, p_iLen);
     p_psoDst->len = p_iLen;

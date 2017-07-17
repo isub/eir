@@ -10,10 +10,11 @@ struct octet_string {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  /* загрузка блэклиста */
-  int app_eir_loadblacklist (const char *p_pszConfFile);
   /* проверка принадлжености IMEI черному списку */
-  int app_eir_imei_in_blacklist (struct octet_string *p_pIMEI);
+  int app_eir_imei_in_blacklist( struct octet_string *p_pIMEI, struct octet_string *p_pSV, struct octet_string *p_pIMSI );
+  /* инициализация логгера */
+  int app_eir_init( const char *p_pszLogFile );
+  void app_eir_fini();
 #ifdef __cplusplus
 }
 #endif
