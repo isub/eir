@@ -28,7 +28,7 @@ int app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet
   CIPConnector coIPConn( 1 );
 
   /* устанавливаем соединение с удаленным сервером */
-  if ( 0 != coIPConn.Connect( "localhost", 999, IPPROTO_UDP ) ) {
+  if ( 0 != coIPConn.Connect( g_psoConf->m_pszCServerName, g_psoConf->m_usCServerPort, IPPROTO_UDP ) ) {
     LOG_E( "can not connect to remote server" );
     return iRetVal;
   } else {
@@ -155,10 +155,10 @@ static int app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen )
   return iRetVal;
 }
 
-int app_eir_init( const char *p_pszLogFile )
+int app_eir_init()
 {
   g_pcoLog = new CLog();
-  CHECK_FCT( g_pcoLog->Init( p_pszLogFile ) );
+  CHECK_FCT( g_pcoLog->Init( g_psoConf->m_pszLogFileMask ) );
 
   /* инициализация модуля статистики */
   CHECK_FCT( stat_init() );

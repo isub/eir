@@ -23,8 +23,8 @@ void app_eir_clean_os (struct octet_string *p_psoOS);
 void app_eir_os_copy (struct octet_string *p_psoDst, unsigned char *p_pData, int p_iLen);
 
 /* выборка данных из запроса */
-int pcrf_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRData);
-int pcrf_extract_terminal_information (struct avp *p_psoAVP, struct STerminalInformation *p_psoTerminalInformation);
+int eir_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRData);
+int eir_extract_terminal_information (struct avp *p_psoAVP, struct STerminalInformation *p_psoTerminalInformation);
 
 /* хэндлер для обработчика ECR запросов */
 static struct disp_hdl *g_pCBHandler = NULL;
@@ -91,7 +91,7 @@ int app_eir_ecr_cb (struct msg **p_ppMsg, struct avp *p_pAVP, struct session *p_
 
   /* выборка данных из запроса */
   memset (&soECRData, 0, sizeof (soECRData));
-  pcrf_extract_req_data (*p_ppMsg, &soECRData);
+  eir_extract_req_data (*p_ppMsg, &soECRData);
 
   /* формирование ответа */
   CHECK_FCT_DO (fd_msg_new_answer_from_req (fd_g_config->cnf_dict, p_ppMsg, 0), goto cleanup_and_exit);
@@ -180,7 +180,7 @@ cleanup_and_exit:
   return 0;
 }
 
-int pcrf_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRData)
+int eir_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRData)
 {
   int iRetVal = 0;
 
@@ -228,7 +228,7 @@ int pcrf_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRD
       case 10415: /* 3GPP */
         switch ( psoAVPHdr->avp_code ) {
           case 1401: /* Terminal-Information */
-            pcrf_extract_terminal_information( psoAVP, &p_psoECRData->m_soTerminalInformation );
+            eir_extract_terminal_information( psoAVP, &p_psoECRData->m_soTerminalInformation );
             break;
         }
         break; /* 3GPP */
@@ -238,7 +238,7 @@ int pcrf_extract_req_data (msg_or_avp *p_psoMsgOrAVP, struct SECRData *p_psoECRD
   return iRetVal;
 }
 
-int pcrf_extract_terminal_information (struct avp *p_psoAVP, struct STerminalInformation *p_psoTerminalInformation)
+int eir_extract_terminal_information (struct avp *p_psoAVP, struct STerminalInformation *p_psoTerminalInformation)
 {
   int iRetVal = 0;
 
@@ -308,7 +308,7 @@ void app_eir_os_copy (struct octet_string *p_psoDst, unsigned char *p_pData, int
   }
 }
 
-int app_pcrf_peer_validate (struct peer_info *p_psoPeerInfo, int *p_piAuth, int (**cb2)(struct peer_info *))
+int app_eir_peer_validate (struct peer_info *p_psoPeerInfo, int *p_piAuth, int (**cb2)(struct peer_info *))
 {
   int iRetVal = 0;
 

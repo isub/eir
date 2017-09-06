@@ -2,14 +2,21 @@
 
 #include "utils/stat/stat.h"
 
+static struct SEIRConf g_soConf;
+struct SEIRConf * g_psoConf;
 
-static int app_eir_entry( const char *p_pszLogFile )
+static int app_eir_entry( const char *p_pszConfFile )
 {
+  g_psoConf = &g_soConf;
+
+  /* чтение файла конфигурации */
+  CHECK_FCT( app_eir_conf_handle( (char*) p_pszConfFile ) );
+
   /* инициализация модуля логирования */
-  CHECK_FCT( app_eir_init( p_pszLogFile ) );
+  CHECK_FCT( app_eir_init() );
 
   /* регистрация функции валидации пира */
-  CHECK_FCT( fd_peer_validate_register( app_pcrf_peer_validate ) );
+  CHECK_FCT( fd_peer_validate_register( app_eir_peer_validate ) );
 
   /* инициализация словаря */
   CHECK_FCT( eir_dict_init() );
