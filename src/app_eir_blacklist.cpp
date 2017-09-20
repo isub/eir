@@ -12,10 +12,10 @@
 CLog *g_pcoLog;
 SStat *g_psoStat;
 
-static int app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen );
+static uint32_t app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen );
 
 extern "C"
-int app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet_string *p_pIMSI )
+uint32_t app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet_string *p_pIMSI )
 {
   if ( ( NULL != p_pIMEI && NULL != p_pIMEI->data ) || ( NULL != p_pIMSI && NULL != p_pIMSI->data ) ) {
   } else {
@@ -24,13 +24,16 @@ int app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet
 
   CTimeMeasurer coTM;
   CTimeMeasurer coTMEIRWS;
-  int iRetVal = 0;
+  uint32_t uiRetVal = 0;
   CIPConnector coIPConn( 1 );
+
+  /* задаем таймаут для операций с сокетом (0.1 сек.) */
+  coIPConn.SetTimeout( 100 );
 
   /* устанавливаем соединение с удаленным сервером */
   if ( 0 != coIPConn.Connect( g_psoConf->m_pszCServerName, g_psoConf->m_usCServerPort, IPPROTO_UDP ) ) {
     LOG_E( "can not connect to remote server" );
-    return iRetVal;
+    return uiRetVal;
   } else {
     LOG_D( "connection to remote server established successfully" );
   }
@@ -86,8 +89,8 @@ int app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet
     LOG_D( "request content: %s", mcParsed );
 #endif
   } else {
+    LOG_D( "can not send request to remote server" );
     goto clean_and_exit;
-    LOG_E( "can not send request to remote server" );
   }
 
   /* если данные успешно отправлены */
@@ -101,10 +104,11 @@ int app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet
     LOG_D( "response content: %s", mcParsed );
 #endif
     stat_measure( g_psoStat, "EIR_WS", &coTMEIRWS );
-    iRetVal = app_eir_get_eq_status( reinterpret_cast<SPSRequest*>( mcBuf ), static_cast<size_t>( iFnRes ) );
+    uiRetVal = app_eir_get_eq_status( reinterpret_cast<SPSRequest*>( mcBuf ), static_cast<size_t>( iFnRes ) );
   } else {
+    LOG_D( "can not receive response" );
+    stat_measure( g_psoStat, "failed", &coTMEIRWS );
     goto clean_and_exit;
-    LOG_E( "can not receive response" );
   }
 
   /* если ответ получен */
@@ -114,12 +118,12 @@ int app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet
 
   stat_measure( g_psoStat, __FUNCTION__, &coTM );
 
-  return iRetVal;
+  return uiRetVal;
 }
 
-static int app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen )
+static uint32_t app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen )
 {
-  int iRetVal = 0;
+  uint32_t uiRetVal = 0;
   CPSPacket coPack;
   std::multimap<__uint16_t, SPSReqAttrParsed> mapAttrList;
   std::multimap<__uint16_t, SPSReqAttrParsed>::iterator iter;
@@ -130,19 +134,19 @@ static int app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen )
     if ( iter != mapAttrList.end() ) {
       switch ( iter->second.m_usDataLen ) {
         case 4:
-          iRetVal = *reinterpret_cast<int*>(iter->second.m_pvData);
-          LOG_D( "equepment status presented in uint32_t: value: %d", iRetVal );
+          uiRetVal = ntohl( *reinterpret_cast<uint32_t*>( iter->second.m_pvData ) );
+          LOG_D( "equepment status presented in uint32_t: value: %u", uiRetVal );
           break;
         case 2:
-          *reinterpret_cast<uint16_t*>(&iRetVal) = *reinterpret_cast<uint16_t*>( iter->second.m_pvData );
-          LOG_D( "equepment status presented in uint16_t: value: %d", iRetVal );
+          uiRetVal = static_cast<uint32_t>( ntohs( *reinterpret_cast<uint16_t*>( iter->second.m_pvData ) ) );
+          LOG_D( "equepment status presented in uint16_t: value: %u", uiRetVal );
           break;
         case 1:
-          *reinterpret_cast<uint8_t*>( &iRetVal ) = *reinterpret_cast<uint8_t*>( iter->second.m_pvData );
-          LOG_D( "equepment status presented in uint8_t: value: %d", iRetVal );
+          uiRetVal = static_cast<uint32_t>( *reinterpret_cast<uint8_t*>( iter->second.m_pvData ) );
+          LOG_D( "equepment status presented in uint8_t: value: %u", uiRetVal );
           break;
         default:
-          LOG_D( "equepment status length '%u': unsupported data type", iter->second.m_usDataLen );
+          LOG_E( "equepment status length '%u': unsupported data type", iter->second.m_usDataLen );
           break;
       }
     } else {
@@ -152,7 +156,7 @@ static int app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen )
     LOG_D( "response parsing failed" );
   }
 
-  return iRetVal;
+  return uiRetVal;
 }
 
 int app_eir_init()

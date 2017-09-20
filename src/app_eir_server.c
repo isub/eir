@@ -57,7 +57,7 @@ int app_eir_server_init ()
   int iRetVal = 0;
   struct disp_when data;
 
-  TRACE_DEBUG (FULL, "Initializing dispatch callbacks for ECR");
+  TRACE_DEBUG( FULL, "Initializing dispatch callbacks for ECR" );
 
   memset (&data, 0, sizeof (data));
   data.app = g_psoDictAppEIR;
