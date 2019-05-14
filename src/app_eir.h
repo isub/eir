@@ -25,7 +25,7 @@ int app_eir_conf_handle( char * p_pszConfFile );
 extern "C" {
 #endif
   /* проверка принадлжености IMEI черному списку */
-  uint32_t app_eir_imei_in_blacklist( struct octet_string *p_pIMEI, struct octet_string *p_pSV, struct octet_string *p_pIMSI );
+  uint32_t app_eir_is_imei_in_blacklist( struct octet_string *p_pIMEI, struct octet_string *p_pSV, struct octet_string *p_pIMSI );
   /* инициализация логгера */
   int app_eir_init();
   void app_eir_fini();

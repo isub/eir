@@ -47,7 +47,7 @@ static void sig_oper( void )
   soIMSI.data = ( unsigned char* )"250270100161042";
   soIMSI.len = strlen( (const char*)soIMSI.data );
 
-  app_eir_imei_in_blacklist( &soIMEI, &soSV, &soIMSI );
+  app_eir_is_imei_in_blacklist( &soIMEI, &soSV, &soIMSI );
 
   LOG_D( "leave '%s'", __FUNCTION__ );
 }
@@ -118,8 +118,8 @@ int app_eir_ecr_cb (struct msg **p_ppMsg, struct avp *p_pAVP, struct session *p_
     union avp_value soAVPVal;
     struct avp *psoChildAVP = NULL;
     CHECK_FCT_DO (fd_msg_avp_new (g_psoDestinationHost, 0, &psoChildAVP), goto cleanup_and_exit);
-    soAVPVal.os.data = soECRData.m_soOriginRealm.data;
-    soAVPVal.os.len = soECRData.m_soOriginRealm.len;
+    soAVPVal.os.data = soECRData.m_soOriginHost.data;
+    soAVPVal.os.len = soECRData.m_soOriginHost.len;
     CHECK_FCT_DO (fd_msg_avp_setvalue (psoChildAVP, &soAVPVal), goto cleanup_and_exit);
     CHECK_FCT_DO (fd_msg_avp_add (pAns, MSG_BRW_LAST_CHILD, psoChildAVP), goto cleanup_and_exit);
   }
@@ -162,7 +162,7 @@ int app_eir_ecr_cb (struct msg **p_ppMsg, struct avp *p_pAVP, struct session *p_
     union avp_value soAVPVal;
     struct avp *psoChildAVP = NULL;
     CHECK_FCT_DO (fd_msg_avp_new (g_psoDictEquipmentStatus, 0, &psoChildAVP), goto cleanup_and_exit);
-    soAVPVal.u32 = app_eir_imei_in_blacklist(
+    soAVPVal.u32 = app_eir_is_imei_in_blacklist(
       &soECRData.m_soTerminalInformation.m_soIMEI,
       &soECRData.m_soTerminalInformation.m_soSoftwareVersion,
       &soECRData.m_soUserName );
@@ -316,8 +316,8 @@ int app_eir_peer_validate (struct peer_info *p_psoPeerInfo, int *p_piAuth, int (
   cb2 = cb2;
 
   /* проверку пира необходимо провести по следующим параметрам: */
-  p_psoPeerInfo->pi_diamid;
-  p_psoPeerInfo->pi_diamidlen;
+  /*p_psoPeerInfo->pi_diamid;*/
+  /*p_psoPeerInfo->pi_diamidlen;*/
   /**/
 
   /* если проверка пройдена успешно */

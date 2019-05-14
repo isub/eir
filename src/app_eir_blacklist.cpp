@@ -15,7 +15,7 @@ SStat *g_psoStat;
 static uint32_t app_eir_get_eq_status( SPSRequest *p_psoResponse, size_t p_stLen );
 
 extern "C"
-uint32_t app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet_string *p_pIMSI )
+uint32_t app_eir_is_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, octet_string *p_pIMSI )
 {
   if ( ( NULL != p_pIMEI && NULL != p_pIMEI->data ) || ( NULL != p_pIMSI && NULL != p_pIMSI->data ) ) {
   } else {
@@ -53,7 +53,18 @@ uint32_t app_eir_imei_in_blacklist( octet_string *p_pIMEI, octet_string *p_pSV, 
   /* задаем атрибуты */
   /* IMEI */
   if ( NULL != p_pIMEI && NULL != p_pIMEI->data ) {
-    iFnRes = coPSPack.AddAttr( reinterpret_cast<SPSRequest*>( mcBuf ), sizeof( mcBuf ), EIR_IMEI, p_pIMEI->data, p_pIMEI->len );
+	  if( p_pIMEI->len == 15 ) {
+		  iFnRes = coPSPack.AddAttr( reinterpret_cast< SPSRequest* >( mcBuf ), sizeof( mcBuf ), EIR_IMEI, p_pIMEI->data, p_pIMEI->len );
+	  } else if( 14 == p_pIMEI->len ) {
+		  std::string strIMEI;
+
+		  strIMEI.assign( reinterpret_cast< const char* >( p_pIMEI->data ), p_pIMEI->len );
+		  strIMEI += '0';
+		  iFnRes = coPSPack.AddAttr( reinterpret_cast< SPSRequest* >( mcBuf ), sizeof( mcBuf ), EIR_IMEI, strIMEI.data(), strIMEI.length() );
+	  } else {
+		  iFnRes = EINVAL;
+	  }
+
     if ( 0 < iFnRes ) {
     } else {
       goto clean_and_exit;
