@@ -169,6 +169,17 @@ int app_eir_ecr_cb (struct msg **p_ppMsg, struct avp *p_pAVP, struct session *p_
     CHECK_FCT_DO (fd_msg_avp_setvalue (psoChildAVP, &soAVPVal), goto cleanup_and_exit);
     CHECK_FCT_DO (fd_msg_avp_add (pAns, MSG_BRW_LAST_CHILD, psoChildAVP), goto cleanup_and_exit);
   }
+  /* Auth-Session-State */
+  {
+	  union avp_value soAVPVal;
+	  struct avp *psoChildAVP = NULL;
+
+	  CHECK_FCT_DO( fd_msg_avp_new( g_psoAuthSessionState, 0, &psoChildAVP ), goto cleanup_and_exit );
+	  soAVPVal.i32 = 1; /* NO_STATE_MAINTAINED */
+	  CHECK_FCT_DO( fd_msg_avp_setvalue( psoChildAVP, &soAVPVal ), goto cleanup_and_exit );
+	  CHECK_FCT_DO( fd_msg_avp_add( pAns, MSG_BRW_LAST_CHILD, psoChildAVP ), goto cleanup_and_exit );
+
+  }
 
   if (pAns) {
     CHECK_FCT_DO (fd_msg_send (p_ppMsg, NULL, NULL), /*continue*/);
